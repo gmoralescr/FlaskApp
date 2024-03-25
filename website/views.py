@@ -7,7 +7,7 @@ from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
 import uuid
-from sqlalchemy import func
+from sqlalchemy import text, and_
 
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -205,9 +205,29 @@ def reject_request(request_id):
     flash('Exchange request rejected.', category='info')
     return redirect(url_for('views.view_my_requests'))
 
+
+from flask import request, flash, redirect, url_for, render_template
+from flask_login import login_required
+from . import db
+from datetime import datetime
+from sqlalchemy import text
+
+def parse_datetime(datetime_str):
+    """Parse datetime string with or without fractional seconds."""
+    for fmt in ('%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%d %H:%M:%S'):
+        try:
+            return datetime.strptime(datetime_str, fmt)
+        except ValueError:
+            pass
+    raise ValueError(f"time data {datetime_str} does not match format '%Y-%m-%d %H:%M:%S.%f' or '%Y-%m-%d %H:%M:%S'")
+
 @views.route('/trends', methods=['GET', 'POST'])
 @login_required
 def trends():
+    total_successful_exchanges = 0  # Initialize the total number of successful exchanges to 0
+    average_exchange_time = None
+    time_unit = 'days'
+
     if request.method == 'POST':
         start_date = request.form.get('start_date')
         end_date = request.form.get('end_date')
@@ -221,31 +241,54 @@ def trends():
             flash('Invalid date format. Please use YYYY-MM-DD.', category='error')
             return redirect(url_for('views.trends'))
 
-        filtered_notes = Note.query.filter(Note.date >= start_date, Note.date <= end_date,
-                                           Note.category == category, Note.condition == condition).all()
+        filtered_notes_query = text("""
+        SELECT * FROM note
+        WHERE date >= :start_date AND date <= :end_date
+        AND category = :category AND condition = :condition
+        """)
+        filtered_notes = db.session.execute(filtered_notes_query, {'start_date': start_date, 'end_date': end_date, 'category': category, 'condition': condition}).fetchall()
 
-        top_liked_notes = db.session.query(Note, func.count(likes_table.c.user_id).label('total_likes'))\
-                                    .join(likes_table)\
-                                    .filter(Note.date >= start_date, Note.date <= end_date,
-                                            Note.category == category, Note.condition == condition)\
-                                    .group_by(Note.id)\
-                                    .order_by(func.count(likes_table.c.user_id).desc())\
-                                    .limit(3).all()
+        top_liked_notes_query = text("""
+        SELECT note.*, count(likes.user_id) as total_likes
+        FROM note
+        JOIN likes ON note.id = likes.note_id
+        WHERE note.date >= :start_date AND note.date <= :end_date
+        AND note.category = :category AND note.condition = :condition
+        GROUP BY note.id
+        ORDER BY total_likes DESC
+        LIMIT 3
+        """)
+        top_liked_notes = db.session.execute(top_liked_notes_query, {'start_date': start_date, 'end_date': end_date, 'category': category, 'condition': condition}).fetchall()
 
-        exchange_requests = ExchangeRequest.query.join(Note, ExchangeRequest.item_id == Note.id)\
-            .filter(Note.date >= start_date, Note.date <= end_date,
-                    Note.category == category, Note.condition == condition,
-                    ExchangeRequest.status == 'Accepted')\
-            .all()
+        exchange_requests_query = text("""
+        SELECT exchange_request.exchange_date, note.date
+        FROM exchange_request
+        JOIN note ON exchange_request.item_id = note.id
+        WHERE note.date >= :start_date AND note.date <= :end_date
+        AND note.category = :category AND note.condition = :condition
+        AND exchange_request.status = 'Accepted'
+        """)
+        exchange_requests = db.session.execute(exchange_requests_query, {'start_date': start_date, 'end_date': end_date, 'category': category, 'condition': condition}).fetchall()
 
-        total_exchange_time = sum((exchange_request.exchange_date - exchange_request.item.date).total_seconds() for exchange_request in exchange_requests if exchange_request.exchange_date and exchange_request.item.date)
-        average_exchange_time_days = (total_exchange_time / (86400 * len(exchange_requests))) if exchange_requests else 0
+        if exchange_requests:
+            total_successful_exchanges = len(exchange_requests)
+            total_time_delta_minutes = sum(
+                [(parse_datetime(exchange[0]) - parse_datetime(exchange[1])).total_seconds() / 60
+                 for exchange in exchange_requests])  # Sum of time deltas in minutes
+            average_exchange_time_minutes = total_time_delta_minutes / total_successful_exchanges
+            average_exchange_time_days = average_exchange_time_minutes / (24 * 60)  # Convert minutes to days
 
-        total_exchanges = len([req for req in exchange_requests if req.status == 'Accepted'])
+            # If average time is less than a day, use minutes instead
+            if average_exchange_time_days < 1:
+                average_exchange_time = average_exchange_time_minutes
+                time_unit = 'minutes'
+            else:
+                average_exchange_time = average_exchange_time_days
+                time_unit = 'days'
 
-        return render_template('trends.html', filtered_notes=filtered_notes, total_exchanges=total_exchanges,
-                               top_liked_notes=top_liked_notes, average_days_to_exchange=average_exchange_time_days,
-                               start_date=start_date.strftime('%Y-%m-%d'), end_date=end_date.strftime('%Y-%m-%d'),
-                               category=category, condition=condition, user=current_user)
+        return render_template('trends.html', filtered_notes=filtered_notes, top_liked_notes=top_liked_notes,
+                               total_successful_exchanges=total_successful_exchanges,
+                               average_exchange_time=average_exchange_time, time_unit=time_unit, user=current_user)
     else:
-        return render_template('trends.html', user=current_user)
+        return render_template('trends.html', total_successful_exchanges=total_successful_exchanges,
+                               average_exchange_time=average_exchange_time, time_unit=time_unit, user=current_user)
