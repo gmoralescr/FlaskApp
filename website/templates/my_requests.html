@@ -20,7 +20,7 @@
         {% for request in received_requests %}
             <div class="list-group-item">
                 {{ request.requester.email }} wants to exchange for {{ request.item.title }} - Status: {{ request.status }}
-                <form action="{{ url_for('views.accept_request', request_id=request.id) }}" method="POST" style="display: inline;">
+                <form action="{{ url_for('views.accept_exchange', request_id=request.id) }}" method="POST" style="display: inline;">
                     <button type="submit" class="btn btn-success btn-sm">Accept</button>
                 </form>
                 <form action="{{ url_for('views.reject_request', request_id=request.id) }}" method="POST" style="display: inline;">
