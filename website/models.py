@@ -47,7 +47,9 @@ class ExchangeRequest(db.Model):
     requester_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     responder_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     status = db.Column(db.String(50), default='Pending')  # Possible values: Pending, Accepted, Rejected
+    exchange_date = db.Column(db.DateTime(timezone=True))  # Timestamp when exchange is accepted
 
     item = db.relationship('Note', foreign_keys=[item_id], backref=backref('exchange_requests', lazy=True))
     requester = db.relationship('User', foreign_keys=[requester_id], backref=backref('sent_requests', lazy=True))
     responder = db.relationship('User', foreign_keys=[responder_id], backref=backref('received_requests', lazy=True))
+
