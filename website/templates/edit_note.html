@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Edit Note{% endblock %}
+{% block content %}
+<div class="container">
+    <h1>Edit Note</h1>
+    <form method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="title">Title</label>
+            <input type="text" name="title" id="title" class="form-control" value="{{ note.title }}" required>
+        </div>
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea name="description" id="description" class="form-control" required>{{ note.description }}</textarea>
+        </div>
+        <div class="form-group">
+  <label for="category">Category</label>
+  <select name="category" id="category" class="form-control" required>
+    <option value="">Select a Category</option>
+    <option value="Clothing">Clothing</option>
+    <option value="Accessories">Accessories</option>
+    <!-- Added categories -->
+    <option value="Tops">Tops</option>
+    <option value="Bottoms">Bottoms</option>
+    <option value="Dresses">Dresses</option>
+    <option value="Outerwear">Outerwear</option>
+    <option value="Footwear">Footwear</option>
+    <option value="Undergarments">Undergarments</option>
+    <option value="Sportswear">Sportswear</option>
+    <option value="Sleepwear">Sleepwear</option>
+    <option value="Bags">Bags</option>
+    <option value="Accessories">Accessories</option>
+      <option value="Other">Other</option>
+  </select>
+</div>
+         <div class="form-group">
+  <label for="size">Size</label>
+  <select name="size" id="size" class="form-control" required>
+    <option value="">Select a Size</option>
+    <option value="Small">Small</option>
+    <option value="Medium">Medium</option>
+     <option value="Large">Large</option>
+       <option value="Footwear - 5">Footwear - 5</option>
+      <option value="Footwear - 6">Footwear - 6</option>
+      <option value="Footwear - 7">Footwear - 7</option>
+      <option value="Footwear - 8">Footwear - 8</option>
+      <option value="Footwear - 9">Footwear - 9</option>
+      <option value="Footwear - 10">Footwear - 10</option>
+  </select>
+</div>
+        <div class="form-group">
+            <label for="color">Color</label>
+            <input type="text" name="color" id="color" class="form-control" value="{{ note.color }}" required>
+        </div>
+        <div class="form-group">
+            <label for="brand">Brand (Optional)</label>
+            <input type="text" name="brand" id="brand" class="form-control" value="{{ note.brand }}">
+        </div>
+        <div class="form-group">
+            <label for="material">Material (Optional)</label>
+            <input type="text" name="material" id="material" class="form-control" value="{{ note.material }}">
+        </div>
+         <div class="form-group">
+  <label for="condition">Condition</label>
+  <select name="condition" id="condition" class="form-control" required>
+    <option value="">Select a Condition</option>
+    <option value="New">New</option>
+    <option value="Used">Used</option>
+    <!-- Add other conditions as needed -->
+  </select>
+</div>
+        <div class="form-group">
+            <label for="status">Status</label>
+            <select name="status" id="status" class="form-control" required>
+                <option value="Available" {% if note.status == 'Available' %} selected {% endif %}>Available</option>
+                <option value="Unavailable" {% if note.status == 'Unavailable' %} selected {% endif %}>Unavailable</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Update</button>
+    </form>
+</div>
+{% endblock %}

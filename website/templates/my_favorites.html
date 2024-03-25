@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}My Favorites{% endblock %}
+
+{% block content %}
+<h1 align="center">My Favorites</h1>
+<div class="container mt-5">
+    <div class="row">
+        {% for note in notes %}
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ note.title }}</h5>
+                    <p class="card-text">{{ note.description }}</p>
+                    {% if note.image_url %}
+                    <img src="{{ url_for('static', filename=note.image_url) }}" class="card-img-top" alt="Item image" style="max-height: 200px; object-fit: cover;">
+                    {% else %}
+                    <span>No image</span>
+                    {% endif %}
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Category: {{ note.category }}</li>
+                    <li class="list-group-item">Size: {{ note.size }}</li>
+                    <li class="list-group-item">Color: {{ note.color }}</li>
+                    <li class="list-group-item">Brand: {{ note.brand or 'N/A' }}</li>
+                    <li class="list-group-item">Material: {{ note.material or 'N/A' }}</li>
+                    <li class="list-group-item">Condition: {{ note.condition }}</li>
+                    <li class="list-group-item">Status: {{ note.status }}</li>
+                    <li class="list-group-item">Likes: {{ note.likers|length }}</li>
+                    <li class="list-group-item">Date: {{ note.date.strftime('%Y-%m-%d %H:%M:%S') }}</li>
+                </ul>
+                <div class="card-footer">
+                    <form action="{{ url_for('views.like_item', note_id=note.id) }}" method="POST">
+                        <button type="submit" class="btn btn-danger btn-sm">Unlike</button>
+                    </form>
+                    {% if note.user_id != user.id %}
+                    <!-- Button to request an exchange -->
+                    <form action="{{ url_for('views.request_exchange', item_id=note.id) }}" method="POST" style="margin-top: 10px;">
+                        <button type="submit" class="btn btn-sm btn-success">Request Exchange</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <p>You have no favorites yet.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

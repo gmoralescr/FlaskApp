@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Add Item{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 align="center">Add a New Item</h1>
+    <form method="POST" enctype="multipart/form-data" class="mb-5">
+        <div class="form-group">
+          <input type="text" name="title" class="form-control" placeholder="Title" required>
+        </div>
+        <div class="form-group">
+          <textarea name="description" class="form-control" placeholder="Description" required></textarea>
+        </div>
+        <div class="form-group">
+  <label for="category">Category</label>
+  <select name="category" id="category" class="form-control" required>
+    <option value="">Select a Category</option>
+    <option value="Clothing">Clothing</option>
+    <option value="Accessories">Accessories</option>
+    <!-- Added categories -->
+    <option value="Tops">Tops</option>
+    <option value="Bottoms">Bottoms</option>
+    <option value="Dresses">Dresses</option>
+    <option value="Outerwear">Outerwear</option>
+    <option value="Footwear">Footwear</option>
+    <option value="Undergarments">Undergarments</option>
+    <option value="Sportswear">Sportswear</option>
+    <option value="Sleepwear">Sleepwear</option>
+    <option value="Bags">Bags</option>
+    <option value="Accessories">Accessories</option>
+      <option value="Other">Other</option>
+  </select>
+</div>
+        <div class="form-group">
+  <label for="size">Size</label>
+  <select name="size" id="size" class="form-control" required>
+    <option value="">Select a Size</option>
+    <option value="Small">Small</option>
+    <option value="Medium">Medium</option>
+     <option value="Large">Large</option>
+       <option value="Footwear - 5">Footwear - 5</option>
+      <option value="Footwear - 6">Footwear - 6</option>
+      <option value="Footwear - 7">Footwear - 7</option>
+      <option value="Footwear - 8">Footwear - 8</option>
+      <option value="Footwear - 9">Footwear - 9</option>
+      <option value="Footwear - 10">Footwear - 10</option>
+  </select>
+</div>
+        <div class="form-group">
+          <input type="text" name="color" class="form-control" placeholder="Color" required>
+        </div>
+        <div class="form-group">
+          <input type="text" name="brand" class="form-control" placeholder="Brand (Optional)">
+        </div>
+        <div class="form-group">
+          <input type="text" name="material" class="form-control" placeholder="Material (Optional)">
+        </div>
+        <div class="form-group">
+  <label for="condition">Condition</label>
+  <select name="condition" id="condition" class="form-control" required>
+    <option value="">Select a Condition</option>
+    <option value="New">New</option>
+    <option value="Used">Used</option>
+    <!-- Add other conditions as needed -->
+  </select>
+</div>
+        <div class="form-group">
+          <select name="status" class="form-control" required>
+            <option value="Available">Available</option>
+            <option value="Unavailable">Unavailable</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="note_image" class="btn btn-secondary">Choose Image</label>
+          <input type="file" name="note_image" id="note_image" accept="image/*" style="display: none;" onchange="document.getElementById('file-chosen').textContent = this.files[0].name">
+          <span id="file-chosen">No file chosen</span>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+</div>
+{% endblock %}
