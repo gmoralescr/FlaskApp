@@ -5,6 +5,8 @@
 {% block content %}
 <div class="container mt-4">
     <h1>Trends in Clothing Exchanges</h1>
+
+    <!-- Filter form -->
     <div class="filter-form mt-4 mb-5">
         <form action="{{ url_for('views.trends') }}" method="POST" class="form-inline">
             <div class="form-group mb-2">
@@ -19,19 +21,18 @@
                 <label for="category" class="sr-only">Category</label>
                 <select name="category" id="category" class="form-control" required>
                     <option value="">Select Category</option>
-                    <!-- Populate categories dynamically -->
+                    <!-- Dynamically populated categories -->
                     <option value="Tops">Tops</option>
-    <option value="Bottoms">Bottoms</option>
-    <option value="Dresses">Dresses</option>
-    <option value="Outerwear">Outerwear</option>
-    <option value="Footwear">Footwear</option>
-    <option value="Undergarments">Undergarments</option>
-    <option value="Sportswear">Sportswear</option>
-    <option value="Sleepwear">Sleepwear</option>
-    <option value="Bags">Bags</option>
-    <option value="Accessories">Accessories</option>
-      <option value="Other">Other</option>
-                    <!-- Add other categories as needed -->
+                    <option value="Bottoms">Bottoms</option>
+                    <option value="Dresses">Dresses</option>
+                    <option value="Outerwear">Outerwear</option>
+                    <option value="Footwear">Footwear</option>
+                    <option value="Undergarments">Undergarments</option>
+                    <option value="Sportswear">Sportswear</option>
+                    <option value="Sleepwear">Sleepwear</option>
+                    <option value="Bags">Bags</option>
+                    <option value="Accessories">Accessories</option>
+                    <option value="Other">Other</option>
                 </select>
             </div>
             <div class="form-group mx-sm-3 mb-2">
@@ -46,6 +47,7 @@
         </form>
     </div>
 
+    <!-- Display Total Exchanges and Filtered Results -->
     {% if filtered_notes %}
     <div class="filtered-results">
         <h2>Filtered Results</h2>
@@ -66,5 +68,44 @@
         </div>
     </div>
     {% endif %}
+
+    <!-- Top 3 Liked Items Section -->
+    <h2 class="mt-5">Top 3 Liked Items</h2>
+    <div class="row">
+        {% for note, total_likes in top_liked_notes %}
+        <div class="col-md-4">
+            <div class="card mb-3">
+                {% if note.image_url %}
+                <img src="{{ url_for('static', filename=note.image_url) }}" class="card-img-top" alt="{{ note.title }}">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ note.title }}</h5>
+                    <p class="card-text">{{ note.description }}</p>
+                    <small class="text-muted">Likes: {{ total_likes }}</small>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <p class="ml-3">No liked items to display.</p>
+        {% endfor %}
+</div>
+ <!-- Average Time to Exchange Section -->
+{% if average_days_to_exchange and average_days_to_exchange > 0 %}
+<div class="average-time-to-exchange mt-5">
+    <h2>Average Time to Exchange</h2>
+    {% if average_days_to_exchange < 1 %}
+        <!-- When average time is less than 1 day, show in hours -->
+        <p>The average time to exchange for the filtered items is <strong>{{ (average_days_to_exchange * 24) | round(2) }} hours</strong>.</p>
+    {% else %}
+        <!-- When average time is 1 day or more, show in days -->
+        <p>The average time to exchange for the filtered items is <strong>{{ average_days_to_exchange | round(2) }} days</strong>.</p>
+    {% endif %}
+</div>
+{% else %}
+<div class="average-time-to-exchange mt-5">
+    <h2>Average Time to Exchange</h2>
+    <p>No exchange time data available for the selected filters.</p>
+</div>
+{% endif %}
 </div>
 {% endblock %}
