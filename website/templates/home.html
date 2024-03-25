@@ -1,30 +1,51 @@
-{% extends "base.html" %} {% block title %}Home{% endblock %} {% block content
-%}
-<h1 align="center">Notes</h1>
-<ul class="list-group list-group-flush" id="notes">
-  {% for note in user.notes %}
-  <li class="list-group-item">
-    {{ note.data }}
-    <button type="button" class="close" onClick="deleteNote({{ note.id }})">
-      <span aria-hidden="true">&times;</span>
-    </button>
-  </li>
-  {% endfor %}
-</ul>
-{% for note in user.notes %}
-<li class="list-group-item">
-  {{ note.data }}
-  <button type="button" class="btn btn-secondary" onclick="editNote({{ note.id }})">Edit</button>
-  <button type="button" class="close" onClick="deleteNote({{ note.id }})">
-    <span aria-hidden="true">&times;</span>
-  </button>
-</li>
-{% endfor %}
-<form method="POST">
-  <textarea name="note" id="note" class="form-control"></textarea>
-  <br />
-  <div align="center">
-    <button type="submit" class="btn btn-primary">Add Note</button>
-  </div>
-</form>
+{% extends "base.html" %}
+
+{% block title %}My Closet{% endblock %}
+
+{% block content %}
+<h1 align="center">My Closet</h1>
+<div class="text-center mb-3">
+    <a href="{{ url_for('views.add_item') }}" class="btn btn-primary">Add a New Item</a>
+</div>
+
+<div class="container mt-5">
+    <h2 align="center">Your Items</h2>
+    <div class="row">
+        {% for note in user.notes %}
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ note.title }}</h5>
+                    <p class="card-text">{{ note.description }}</p>
+                    {% if note.image_url %}
+                    <img src="{{ url_for('static', filename=note.image_url) }}" class="card-img-top" alt="Item image" style="max-height: 200px; object-fit: cover;">
+                    {% else %}
+                    <span>No image</span>
+                    {% endif %}
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Category: {{ note.category }}</li>
+                    <li class="list-group-item">Size: {{ note.size }}</li>
+                    <li class="list-group-item">Color: {{ note.color }}</li>
+                    <li class="list-group-item">Brand: {{ note.brand or 'N/A' }}</li>
+                    <li class="list-group-item">Material: {{ note.material or 'N/A' }}</li>
+                    <li class="list-group-item">Condition: {{ note.condition }}</li>
+                    <li class="list-group-item">Status: {{ note.status }}</li>
+                    <li class="list-group-item">Date Posted: {{ note.date.strftime('%Y-%m-%d %H:%M:%S') }}</li>
+
+                </ul>
+                <div class="card-footer">
+                    <a href="{{ url_for('views.edit_note', note_id=note.id) }}" class="btn btn-primary btn-sm">Edit</a>
+                    <button type="button" class="btn btn-danger btn-sm" onClick="deleteNote({{ note.id }})">Delete</button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/noteOperations.js') }}"></script>
 {% endblock %}
