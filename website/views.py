@@ -1,12 +1,14 @@
 from flask import Blueprint, render_template, request, flash, jsonify, current_app, redirect, url_for, abort
 from flask_login import login_required, current_user
-from .models import Note, User, ExchangeRequest  # Assuming the likes_table is used for the association
+from .models import Note, User, ExchangeRequest, likes_table  # Assuming the likes_table is used for the association
 from . import db
 import json
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
 import uuid
+from sqlalchemy import func
+
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
@@ -179,20 +181,18 @@ def view_my_requests():
     received_requests = ExchangeRequest.query.filter_by(responder_id=current_user.id).all()
     return render_template("my_requests.html", sent_requests=sent_requests, received_requests=received_requests,user=current_user )
 
-@views.route('/accept-request/<int:request_id>', methods=['POST'])
+@views.route('/accept-exchange/<int:request_id>', methods=['POST'])
 @login_required
-def accept_request(request_id):
+def accept_exchange(request_id):
     exchange_request = ExchangeRequest.query.get_or_404(request_id)
-    if exchange_request.responder_id != current_user.id:
-        abort(403)  # Forbidden if not the intended recipient
-    exchange_request.status = 'Accepted'
-
-    # Mark the item as unavailable
-    item = exchange_request.item
-    item.status = 'Unavailable'
-    db.session.commit()
-    flash('Exchange request accepted. The item has been marked as unavailable.', category='success')
-    return redirect(url_for('views.view_my_requests'))
+    if exchange_request.responder_id == current_user.id:
+        exchange_request.status = 'Accepted'
+        exchange_request.exchange_date = datetime.utcnow()  # Setting the exchange completion timestamp
+        db.session.commit()
+        flash('Exchange accepted.', 'success')
+    else:
+        flash('Not authorized to accept this exchange.', 'error')
+    return redirect(url_for('views.home'))
 
 @views.route('/reject-request/<int:request_id>', methods=['POST'])
 @login_required
@@ -209,36 +209,43 @@ def reject_request(request_id):
 @login_required
 def trends():
     if request.method == 'POST':
-        # Extract filter criteria from the form submission
         start_date = request.form.get('start_date')
         end_date = request.form.get('end_date')
         category = request.form.get('category')
         condition = request.form.get('condition')
 
-        # Convert start_date and end_date to datetime objects
-        # Assuming start_date and end_date are submitted as 'YYYY-MM-DD'
         try:
             start_date = datetime.strptime(start_date, '%Y-%m-%d')
             end_date = datetime.strptime(end_date, '%Y-%m-%d')
-        except ValueError as e:
+        except ValueError:
             flash('Invalid date format. Please use YYYY-MM-DD.', category='error')
             return redirect(url_for('views.trends'))
 
-        # Ensure end_date is after start_date
-        if end_date < start_date:
-            flash('End date must be after start date.', category='error')
-            return redirect(url_for('views.trends'))
-
-        # Filter notes by date range, category, and condition
         filtered_notes = Note.query.filter(Note.date >= start_date, Note.date <= end_date,
                                            Note.category == category, Note.condition == condition).all()
 
-        # Calculate the total number of successful exchanges for the filtered notes
-        total_exchanges = sum(1 for note in filtered_notes if any(req.status == 'Accepted' for req in note.exchange_requests))
+        top_liked_notes = db.session.query(Note, func.count(likes_table.c.user_id).label('total_likes'))\
+                                    .join(likes_table)\
+                                    .filter(Note.date >= start_date, Note.date <= end_date,
+                                            Note.category == category, Note.condition == condition)\
+                                    .group_by(Note.id)\
+                                    .order_by(func.count(likes_table.c.user_id).desc())\
+                                    .limit(3).all()
 
-        # Prepare the filtered data and criteria for displaying back in the template
-        return render_template('trends.html', filtered_notes=filtered_notes, total_exchanges=total_exchanges, category=category, condition=condition, start_date=start_date.strftime('%Y-%m-%d'), end_date=end_date.strftime('%Y-%m-%d'), user=current_user)
+        exchange_requests = ExchangeRequest.query.join(Note, ExchangeRequest.item_id == Note.id)\
+            .filter(Note.date >= start_date, Note.date <= end_date,
+                    Note.category == category, Note.condition == condition,
+                    ExchangeRequest.status == 'Accepted')\
+            .all()
+
+        total_exchange_time = sum((exchange_request.exchange_date - exchange_request.item.date).total_seconds() for exchange_request in exchange_requests if exchange_request.exchange_date and exchange_request.item.date)
+        average_exchange_time_days = (total_exchange_time / (86400 * len(exchange_requests))) if exchange_requests else 0
+
+        total_exchanges = len([req for req in exchange_requests if req.status == 'Accepted'])
+
+        return render_template('trends.html', filtered_notes=filtered_notes, total_exchanges=total_exchanges,
+                               top_liked_notes=top_liked_notes, average_days_to_exchange=average_exchange_time_days,
+                               start_date=start_date.strftime('%Y-%m-%d'), end_date=end_date.strftime('%Y-%m-%d'),
+                               category=category, condition=condition, user=current_user)
     else:
-        # GET request: Initial page load or reset, not filtering yet
-        # No need to pass specific filtered data, just render the empty form
         return render_template('trends.html', user=current_user)
