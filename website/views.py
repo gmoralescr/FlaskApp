@@ -186,10 +186,16 @@ def view_my_requests():
 def accept_exchange(request_id):
     exchange_request = ExchangeRequest.query.get_or_404(request_id)
     if exchange_request.responder_id == current_user.id:
+        # Set the exchange request status to 'Accepted'
         exchange_request.status = 'Accepted'
         exchange_request.exchange_date = datetime.utcnow()  # Setting the exchange completion timestamp
+
+        # Fetch the item associated with the exchange request and update its status
+        item = Note.query.get_or_404(exchange_request.item_id)
+        item.status = 'Unavailable'  # Update the item's status to indicate it's no longer available
+
         db.session.commit()
-        flash('Exchange accepted.', 'success')
+        flash('Exchange accepted and item status updated to unavailable.', 'success')
     else:
         flash('Not authorized to accept this exchange.', 'error')
     return redirect(url_for('views.home'))
