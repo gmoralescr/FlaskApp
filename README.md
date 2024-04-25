@@ -48,7 +48,7 @@ Ensure that your database and application configurations are set up correctly in
 - `/`: The home page showing all liked notes for the current user.
 - `/add-item`: Add a new clothing item with detailed attributes and image upload.
 - `/like-item/<int:note_id>`: Like or unlike a specific item.
-- `/my-favorites`: Display all item liked by the current user.
+- `/my-favorites`: Display all items liked by the current user.
 - `/edit-note/<int:note_id>`: Edit details of a specific item.
 - `/all-items`: View all items added by all users.
 - `/request-exchange/<int:item_id>`: Request an exchange for an item.
