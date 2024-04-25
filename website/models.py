@@ -17,18 +17,18 @@ likes_table = db.Table('likes',
 
 class Note(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.DateTime(timezone=True), default=func.now())
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    date = db.Column(db.DateTime(timezone=True), default=func.now(), index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
     image_url = db.Column(db.String(1000000))  # Stores the image file path
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(10000), nullable=False)
-    category = db.Column(db.String(100), nullable=False)
+    category = db.Column(db.String(100), nullable=False, index=True)
     size = db.Column(db.String(50), nullable=False)
     color = db.Column(db.String(100), nullable=False)
     brand = db.Column(db.String(100), nullable=True)  # Optional
     material = db.Column(db.String(100), nullable=True)  # Optional
     condition = db.Column(db.String(100), nullable=False)
-    status = db.Column(db.String(50), nullable=False, default="Available")
+    status = db.Column(db.String(50), nullable=False, default="Available", index=True)
     # Relationship for likes, using the likes_table as the association table
     likers = db.relationship('User', secondary=likes_table, back_populates="liked_notes")
 
@@ -45,9 +45,9 @@ class User(db.Model, UserMixin):
 
 class ExchangeRequest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    item_id = db.Column(db.Integer, db.ForeignKey('note.id'), nullable=False)
-    requester_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    responder_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    item_id = db.Column(db.Integer, db.ForeignKey('note.id'), nullable=False, index=True)
+    requester_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    responder_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
     status = db.Column(db.String(50), default='Pending')  # Possible values: Pending, Accepted, Rejected
     exchange_date = db.Column(db.DateTime(timezone=True))  # Timestamp when exchange is accepted
 
